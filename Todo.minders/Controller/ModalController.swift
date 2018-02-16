@@ -34,7 +34,7 @@ class ModalController: UIViewController {
         let button = UIButton()
         button.setTitle("Add Task", for: .normal)
         button.addTarget(self, action: #selector(addTask), for: .touchUpInside)
-        button.backgroundColor = UIColor.blue
+        button.backgroundColor = UIColor(red: 64/255, green: 101/255, blue: 225/255, alpha: 1)
         button.layer.cornerRadius = 4
         return button
     }()
@@ -45,13 +45,27 @@ class ModalController: UIViewController {
         return view
     }()
     
-    let toggleButton = UISwitch()
-    
-    let reminderLabel: UILabel = {
-        let label = UILabel()
-        label.text = "No date"
-        return label
+    let addButton: PrimaryButton = {
+        let button = PrimaryButton()
+        button.setTitle("Add Reminder", for: .normal)
+        button.addTarget(self, action: #selector(addTask), for: .touchUpInside)
+        return button
     }()
+    
+    let noDateButton: SecondaryButton = {
+        let button = SecondaryButton()
+        button.setTitle("No Date", for: .normal)
+        button.addTarget(self, action: #selector(addTodo), for: .touchUpInside)
+        return button
+    }()
+    
+//    let toggleButton = UISwitch()
+    
+//    let reminderLabel: UILabel = {
+//        let label = UILabel()
+//        label.text = "No date"
+//        return label
+//    }()
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -59,16 +73,22 @@ class ModalController: UIViewController {
         
         datePicker.minimumDate = Date(timeIntervalSinceNow: 120)
         
-        formView.addSubview(reminderLabel)
-        formView.addSubview(toggleButton)
+//        formView.addSubview(reminderLabel)
+//        formView.addSubview(toggleButton)
         formView.addSubview(datePicker)
-        formView.addSubview(button)
+        formView.addSubview(noDateButton)
+        formView.addSubview(addButton)
+//        formView.addSubview(button)
         
-        formView.addConstraintsWithFormat(format: "H:|-32-[v0]-32-[v1]", views: reminderLabel, toggleButton)
-        formView.addConstraintsWithFormat(format: "V:|-20-[v0]", views: reminderLabel)
+//        formView.addConstraintsWithFormat(format: "H:|-32-[v0]-32-|", views: reminderLabel)
+//        formView.addConstraintsWithFormat(format: "V:|-20-[v0]", views: reminderLabel)
         formView.addConstraintsWithFormat(format: "H:|[v0]|", views: datePicker)
-        formView.addConstraintsWithFormat(format: "H:|-32-[v0]-32-|", views: button)
-        formView.addConstraintsWithFormat(format: "V:|-16-[v0]-8-[v1]-8-[v2]", views: toggleButton,datePicker,button)
+        formView.addConstraintsWithFormat(format: "H:|-24-[v0(132)]", views: noDateButton)
+        formView.addConstraintsWithFormat(format: "H:[v0(144)]-24-|", views: addButton)
+//        formView.addConstraintsWithFormat(format: "H:|-32-[v0]-32-|", views: button)
+        formView.addConstraintsWithFormat(format: "V:|-20-[v0]", views: datePicker)
+        formView.addConstraintsWithFormat(format: "V:[v0(48)]-24-|", views: noDateButton)
+        formView.addConstraintsWithFormat(format: "V:[v0(48)]-24-|", views: addButton)
         
         view.backgroundColor = UIColor(red: 0/255, green: 0/255, blue: 0/255, alpha: 0.5)
         
@@ -114,6 +134,41 @@ class ModalController: UIViewController {
         self.dismiss(animated: true, completion: nil)
     }
     
+    @objc func addTodo(){
+        
+        var task: Task
+        
+        // If no task was tapped -> New Task
+        if isNewTask {
+            
+            task = {
+                let newTask = Task()
+                newTask.name = taskText!
+                newTask.noDate = true
+                return newTask
+            }()
+            try! realm.write {
+                realm.add(task)
+            }
+            
+        } else {
+            
+            task = currentTask!
+            
+            try! realm.write {
+                task.notificationTime = Date()
+                task.shouldAct = false
+                task.noDate = true
+            }
+            
+        }
+        
+        DataManager.shared.mainController.getData()
+        DataManager.shared.mainController.collectionView?.reloadData()
+        DataManager.shared.mainController.clearTextField()
+        dismissModal()
+    }
+    
     @objc func addTask(){
         
         let time = datePicker.date
@@ -134,11 +189,12 @@ class ModalController: UIViewController {
             }
             
         } else {
-            
+            print("WTF")
             task = currentTask!
             try! realm.write {
                 task.notificationTime = time
                 task.shouldAct = false
+                task.noDate = false
             }
             
         }

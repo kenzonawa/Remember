@@ -29,11 +29,10 @@ class PrimaryButton: UIButton {
         layer.backgroundColor = color
         layer.cornerRadius = 4
         
-        
         setTitle("Done", for: .normal)
         titleLabel?.font = UIFont.systemFont(ofSize: 15, weight: .medium)
         setTitleColor(UIColor.white , for: .normal)
-        addTarget(self, action: #selector(buttonPressed), for: .touchUpInside)
+        //addTarget(self, action: #selector(buttonPressed), for: .touchUpInside)
     }
     
     @objc func buttonPressed() {
@@ -66,7 +65,7 @@ class SecondaryButton: UIButton {
         setTitle("Snooze", for: .normal)
         titleLabel?.font = UIFont.systemFont(ofSize: 15, weight: .medium)
         setTitleColor(color , for: .normal)
-        addTarget(self, action: #selector(buttonPressed), for: .touchUpInside)
+        //addTarget(self, action: #selector(buttonPressed), for: .touchUpInside)
     }
     
     @objc func buttonPressed() {

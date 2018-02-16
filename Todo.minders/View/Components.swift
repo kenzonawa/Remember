@@ -23,6 +23,7 @@ public class Header: UICollectionViewCell {
         let textField = UILabel()
         textField.text = "To Do"
         textField.font = UIFont.boldSystemFont(ofSize: 32)
+        textField.textColor = UIColor(red: 51/255, green: 51/255, blue: 51/255, alpha: 1)
         return textField
     }()
     
@@ -30,8 +31,8 @@ public class Header: UICollectionViewCell {
         
         addSubview(label)
         
-        addConstraintsWithFormat(format: "H:|-8-[v0]-8-|", views: label)
-        addConstraintsWithFormat(format: "V:|-8-[v0]-8-|", views: label)
+        addConstraintsWithFormat(format: "H:|-24-[v0]-24-|", views: label)
+        addConstraintsWithFormat(format: "V:|-24-[v0]|", views: label)
         
     }
     

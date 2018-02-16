@@ -43,6 +43,35 @@ class NotifiedCell: BaseTaskCell {
     
 }
 
+class TodoCell: BaseTaskCell {
+    
+    let setReminder: UILabel = {
+        let label = UILabel()
+        label.text = "Set\nReminder"
+        label.font = UIFont.systemFont(ofSize: 13, weight: UIFont.Weight.medium)
+        label.textColor = UIColor(red: 64/255, green: 101/255, blue: 225/255, alpha: 1)
+        label.textAlignment = .center
+        label.addCharactersSpacing(0.6)
+        label.numberOfLines = 0
+        label.lineBreakMode = NSLineBreakMode.byWordWrapping
+        return label
+    }()
+    
+    override func setupViews() {
+        
+        setDelete()
+        setupContainerView(active: false)
+        timeLabel.isHidden = true
+        dateLabel.isHidden = true
+        
+        container.addSubview(setReminder)
+        container.addConstraintsWithFormat(format: "H:[v0]-12-|", views: setReminder)
+        container.addConstraintsWithFormat(format: "V:|-20-[v0]", views: setReminder)
+        
+    }
+    
+}
+
 public class BaseTaskCell: BaseCell, UIGestureRecognizerDelegate {
     
     var deleteLabel1: UILabel!

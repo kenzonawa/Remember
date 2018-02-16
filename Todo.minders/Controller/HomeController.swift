@@ -17,6 +17,7 @@ class HomeController: UICollectionViewController, UICollectionViewDelegateFlowLa
     let realm = try! Realm()
     
     var taskList: Results<Task>?
+    var todoList: Results<Task>?
     
     var currentIndexPath: Int?
     
@@ -45,6 +46,7 @@ class HomeController: UICollectionViewController, UICollectionViewDelegateFlowLa
         
         collectionView?.showsVerticalScrollIndicator = false
         navigationItem.title = "Reminders"
+        navigationItem.titleView = UIImageView(image: UIImage(named: "logo"))
         collectionView?.backgroundColor = UIColor.white
         
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert,.badge,.sound], completionHandler:{ (granted,error) in
@@ -57,6 +59,7 @@ class HomeController: UICollectionViewController, UICollectionViewDelegateFlowLa
         
         collectionView?.register(TaskCell.self, forCellWithReuseIdentifier: "cellId")
         collectionView?.register(NotifiedCell.self, forCellWithReuseIdentifier: "notiId")
+        collectionView?.register(TodoCell.self, forCellWithReuseIdentifier: "todoId")
         collectionView?.register(Header.self, forSupplementaryViewOfKind: UICollectionElementKindSectionHeader, withReuseIdentifier: "headerId")
         collectionView?.register(Footer.self, forSupplementaryViewOfKind: UICollectionElementKindSectionFooter, withReuseIdentifier: "footerId")
         
@@ -105,46 +108,72 @@ class HomeController: UICollectionViewController, UICollectionViewDelegateFlowLa
     }
     
     override func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        return taskList!.count
+        
+        if section == 0 {
+            return taskList!.count
+        }
+        if section == 1 {
+            return todoList!.count
+        }
+        
+        return 0
+        
     }
     
     override func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         
-        let task = taskList![indexPath.item]
-        if task.notificationTime <= Date() {
-            try! realm.write {
-                task.shouldAct = true
-            }
-        }
-        
-        if task.shouldAct {
+        if indexPath.section == 1 {
             
-            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "notiId", for: indexPath) as! NotifiedCell
+            let task = todoList![indexPath.item]
+                
+            let cell =  collectionView.dequeueReusableCell(withReuseIdentifier: "todoId", for: indexPath) as! TodoCell
             cell.updateUI(taskName: task.name, time: task.notificationTime)
-            cell.primaryButton.addTarget(self, action: #selector(DoneTapped), for: .touchUpInside)
-            cell.primaryButton.tag = indexPath.row
-            cell.primaryButton.isUserInteractionEnabled = true
-            
-            cell.secondaryButton.addTarget(self, action: #selector(SnoozeTapped), for: .touchUpInside)
-            cell.secondaryButton.tag = indexPath.row
-            cell.secondaryButton.isUserInteractionEnabled = true
-            
             return cell
             
         } else {
-        
-            let cell =  collectionView.dequeueReusableCell(withReuseIdentifier: "cellId", for: indexPath) as! TaskCell
-            cell.updateUI(taskName: task.name, time: task.notificationTime)
-            return cell
+    
+            let task = taskList![indexPath.item]
             
+            if task.notificationTime <= Date() {
+                try! realm.write {
+                    task.shouldAct = true
+                }
+            }
+            
+            if task.shouldAct {
+                
+                let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "notiId", for: indexPath) as! NotifiedCell
+                cell.updateUI(taskName: task.name, time: task.notificationTime)
+                cell.primaryButton.addTarget(self, action: #selector(DoneTapped), for: .touchUpInside)
+                cell.primaryButton.tag = indexPath.row
+                cell.primaryButton.isUserInteractionEnabled = true
+                
+                cell.secondaryButton.addTarget(self, action: #selector(SnoozeTapped), for: .touchUpInside)
+                cell.secondaryButton.tag = indexPath.row
+                cell.secondaryButton.isUserInteractionEnabled = true
+                
+                return cell
+                
+            } else {
+            
+                let cell =  collectionView.dequeueReusableCell(withReuseIdentifier: "cellId", for: indexPath) as! TaskCell
+                cell.updateUI(taskName: task.name, time: task.notificationTime)
+                return cell
+                
+            }
         }
+        
     }
     
     override func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         
         //currentIndexPath = indexPath.row
-        
-        let task = taskList![indexPath.row]
+        var task: Task
+        if indexPath.section == 0 {
+            task = taskList![indexPath.row]
+        } else {
+            task = todoList![indexPath.row]
+        }
         
         let modalController = ModalController()
         modalController.currentTask = task
@@ -159,26 +188,34 @@ class HomeController: UICollectionViewController, UICollectionViewDelegateFlowLa
     
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
         
-        let task = taskList![indexPath.item]
-        if task.notificationTime <= Date() {
-            try! realm.write {
-                task.shouldAct = true
-            }
-        }
-        if task.shouldAct {
-            
-            return CGSize(width: view.frame.width, height: 138)
+        if indexPath.section == 1 {
+
+            return CGSize(width: view.frame.width, height: 86)
             
         } else {
             
-            return CGSize(width: view.frame.width, height: 86)
-            
+            let task = taskList![indexPath.item]
+        
+            if task.notificationTime <= Date() {
+                try! realm.write {
+                    task.shouldAct = true
+                }
+            }
+            if task.shouldAct {
+                
+                return CGSize(width: view.frame.width, height: 138)
+                
+            } else {
+                
+                return CGSize(width: view.frame.width, height: 86)
+                
+            }
         }
         
     }
     
     override func numberOfSections(in collectionView: UICollectionView) -> Int {
-        return 1
+        return 2
     }
     
     override func collectionView(_ collectionView: UICollectionView, viewForSupplementaryElementOfKind kind: String, at indexPath: IndexPath) -> UICollectionReusableView {
@@ -190,6 +227,9 @@ class HomeController: UICollectionViewController, UICollectionViewDelegateFlowLa
             let header = collectionView.dequeueReusableSupplementaryView(ofKind: kind, withReuseIdentifier: "headerId", for: indexPath) as! Header
             if(indexPath.section == 0) {
                 header.label.text = "Reminders"
+            }
+            if(indexPath.section == 1) {
+                header.label.text = "To Do"
             }
             return header
         
@@ -253,7 +293,8 @@ class HomeController: UICollectionViewController, UICollectionViewDelegateFlowLa
     }
     
     func getData(){
-        taskList = realm.objects(Task.self).sorted(byKeyPath: "notificationTime")
+        taskList = realm.objects(Task.self).filter("noDate == false").sorted(byKeyPath: "notificationTime")
+        todoList = realm.objects(Task.self).filter("noDate == true")
     }
     
     @objc func handleKeyboardNotification(notification: NSNotification) {
