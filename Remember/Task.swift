@@ -15,6 +15,7 @@ class Task: Object {
     @objc dynamic var shouldAct = false
     @objc dynamic var noDate = false
     @objc dynamic var notificationTime = Date()
+    @objc dynamic var uuid = ""
     
 }
 
@@ -24,6 +25,7 @@ class RepeatTask: Object {
     @objc dynamic var frequency = ""
     @objc dynamic var day = ""
     @objc dynamic var notificationTime = Date()
+    @objc dynamic var uuid = ""
     
 }
 

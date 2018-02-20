@@ -10,7 +10,18 @@ import UIKit
 
 class RepeatCell: BaseTaskCell {
     
+    var textToDisplay = "Every "
     
+    let frequencyLabel: UILabel = {
+        let label = UILabel()
+        label.text = "Everyday"
+        label.font = UIFont.systemFont(ofSize: 13, weight: .regular)
+        label.textAlignment = .right
+        label.numberOfLines = 0
+        label.lineBreakMode = NSLineBreakMode.byWordWrapping
+        
+        return label
+    }()
     
     override func setupViews() {
         
@@ -21,13 +32,32 @@ class RepeatCell: BaseTaskCell {
         container.addSubview(timeLabel)
         nameLabel.removeFromSuperview()
         container.addSubview(nameLabel)
+        container.addSubview(frequencyLabel)
         
         container.addConstraintsWithFormat(format: "H:|-12-[v0]", views: nameLabel)
         container.addConstraintsWithFormat(format: "H:|-12-[v0]", views: timeLabel)
         container.addConstraintsWithFormat(format: "V:|-16-[v0(20)]-[v1(12)]", views: nameLabel,timeLabel)
         
+        container.addConstraintsWithFormat(format: "H:[v0(80)]-12-|", views: frequencyLabel)
+        frequencyLabel.centerYAnchor.constraint(equalTo: container.centerYAnchor, constant: 2).isActive = true
         
+//        container.addConstraintsWithFormat(format: "V:|-20-[v0]", views: frequencyLabel)
+    
+    }
+    
+    func updateFrequency(frequency: String, day: String) {
         
+        switch frequency{
+        case "daily":
+            textToDisplay = "Everyday"
+        case "weekly":
+            textToDisplay = "Every \(day)"
+        case "monthly":
+            textToDisplay = "Every \(day) of the month"
+        default:
+            textToDisplay = "Default"
+        }
+        frequencyLabel.text = textToDisplay
     }
 }
 
@@ -271,9 +301,25 @@ public class BaseTaskCell: BaseCell, UIGestureRecognizerDelegate {
         } else {
             if pan.translation(in: self).x > 140 {
                 
+                // DELETE
                 let collectionView: UICollectionView = self.superview as! UICollectionView
                 let indexPath: IndexPath = collectionView.indexPathForItem(at: self.center)!
-                collectionView.delegate?.collectionView!(collectionView, performAction: #selector(onPan), forItemAt: indexPath, withSender: nil)
+                
+                
+                
+                UIView.animate(withDuration: 0.5, animations: {
+                    print("doing the animation??")
+                    
+                    self.deleteLabel1.frame = CGRect(x: 700, y: 0, width: 100, height: self.contentView.frame.height)
+                    
+                    self.container.frame = CGRect(x: 700, y: 8, width: self.container.frame.width, height: self.container.frame.height)
+                    
+                    }, completion: { finished in
+                        
+                        collectionView.delegate?.collectionView!(collectionView, performAction: #selector(self.onPan), forItemAt: indexPath, withSender: nil)
+                        })
+                
+               
                 
             } else {
                 UIView.animate(withDuration: 0.2, animations: {
@@ -320,6 +366,23 @@ class Footer: BaseCell {
         self.backgroundColor = .white
         
     }
+}
+
+class EmptyStateCell: BaseCell {
+    
+    let emptyLabel: UILabel = {
+        let label = UILabel()
+        label.text = "To start adding reminders, write a task on the bottom text field"
+        label.textAlignment = .center
+        return label
+    }()
+    
+    override func setupViews() {
+        addSubview(emptyLabel)
+        emptyLabel.centerXAnchor.constraint(equalTo: self.centerXAnchor)
+        emptyLabel.centerYAnchor.constraint(equalTo: self.centerYAnchor)
+    }
+    
 }
 
 public class BaseCell: UICollectionViewCell {

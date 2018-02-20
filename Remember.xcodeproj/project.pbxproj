@@ -129,9 +129,9 @@
 			isa = PBXGroup;
 			children = (
 				780E6B68202A10C300D5CC66 /* HomeController.swift */,
+				78EE815E2032085D009A2BA9 /* ModalController.swift */,
 				78412C61203908F20051B623 /* RepeatController.swift */,
 				7801AE0A2039DA130077926F /* RepeatModalController.swift */,
-				78EE815E2032085D009A2BA9 /* ModalController.swift */,
 			);
 			path = Controller;
 			sourceTree = "<group>";

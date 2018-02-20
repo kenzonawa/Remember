@@ -16,14 +16,22 @@ class HomeController: UICollectionViewController, UICollectionViewDelegateFlowLa
     
     let realm = try! Realm()
     
-    var taskList: Results<Task>?
-    var todoList: Results<Task>?
+    var taskList: Results<Task>!
+    var todoList: Results<Task>!
+    
+    var isEmpty: Bool = true
     
     var currentIndexPath: Int?
     
     override func viewDidLoad() {
         super.viewDidLoad()
         getData()
+        
+        if (taskList.count > 0) || (todoList.count > 0) {
+            isEmpty = false
+        } else {
+            isEmpty = true
+        }
         
         let taskInput: UIView = HomeInput(superView: self)
         
@@ -46,8 +54,18 @@ class HomeController: UICollectionViewController, UICollectionViewDelegateFlowLa
         
         collectionView?.alwaysBounceVertical = true
         collectionView?.showsVerticalScrollIndicator = false
-        navigationItem.title = "Reminders"
-        navigationItem.titleView = UIImageView(image: UIImage(named: "logo"))
+        navigationItem.title = "Tasks"
+        let attributes = [
+            NSAttributedStringKey.kern: 1.0,
+            NSAttributedStringKey.font: UIFont.systemFont(ofSize: 17, weight: .medium)
+            ] as [NSAttributedStringKey : Any]
+        self.navigationController?.navigationBar.titleTextAttributes = attributes
+        
+//        UINavigationBar.appearance().titleTextAttributes = attributes
+        
+        
+//        navigationItem.titleView = UIImageView(image: UIImage(named: "logo"))
+        
         collectionView?.backgroundColor = UIColor.white
         setupNav()
         
@@ -62,6 +80,7 @@ class HomeController: UICollectionViewController, UICollectionViewDelegateFlowLa
         collectionView?.register(TaskCell.self, forCellWithReuseIdentifier: "cellId")
         collectionView?.register(NotifiedCell.self, forCellWithReuseIdentifier: "notiId")
         collectionView?.register(TodoCell.self, forCellWithReuseIdentifier: "todoId")
+        collectionView?.register(EmptyStateCell.self, forCellWithReuseIdentifier: "emptyId")
         collectionView?.register(Header.self, forSupplementaryViewOfKind: UICollectionElementKindSectionHeader, withReuseIdentifier: "headerId")
         collectionView?.register(Footer.self, forSupplementaryViewOfKind: UICollectionElementKindSectionFooter, withReuseIdentifier: "footerId")
         
@@ -110,6 +129,9 @@ class HomeController: UICollectionViewController, UICollectionViewDelegateFlowLa
     }
     
     override func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
+        
+        if isEmpty { self.collectionView?.setEmptyMessage() }
+        else { self.collectionView?.restore() }
         
         if section == 0 {
             return taskList!.count
@@ -229,9 +251,11 @@ class HomeController: UICollectionViewController, UICollectionViewDelegateFlowLa
             let header = collectionView.dequeueReusableSupplementaryView(ofKind: kind, withReuseIdentifier: "headerId", for: indexPath) as! Header
             if(indexPath.section == 0) {
                 header.label.text = "Reminders"
+                header.label.addCharactersSpacing(1.2)
             }
             if(indexPath.section == 1) {
-                header.label.text = "To Do"
+                header.label.text = "No Date"
+                header.label.addCharactersSpacing(1.2)
             }
             return header
         
@@ -246,6 +270,15 @@ class HomeController: UICollectionViewController, UICollectionViewDelegateFlowLa
     }
     
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, referenceSizeForHeaderInSection section: Int) -> CGSize {
+        
+//        if section == 0{
+//            return CGSize(width: 0, height: 0)
+//        }
+        
+        if isEmpty {
+            return CGSize(width: 0, height: 0)
+        }
+        
         return CGSize(width: view.frame.width, height: 60)
     }
     
@@ -257,8 +290,12 @@ class HomeController: UICollectionViewController, UICollectionViewDelegateFlowLa
     }
     
     override func collectionView(_ collectionView: UICollectionView, performAction action: Selector, forItemAt indexPath: IndexPath, withSender sender: Any?) {
-  
+        print("works..")
         deleteTask(indexPathRow: indexPath.row, section: indexPath.section)
+        print("works 2 ..")
+        collectionView.deleteItems(at: [indexPath])
+        print("works 3 ..")
+        
         collectionView.reloadData()
         
     }
@@ -269,6 +306,8 @@ class HomeController: UICollectionViewController, UICollectionViewDelegateFlowLa
     }
     
     @objc func SnoozeTapped(_ sender: UIButton) {
+        
+        print("why am i")
         
         let task = taskList![sender.tag]
         
@@ -287,7 +326,7 @@ class HomeController: UICollectionViewController, UICollectionViewDelegateFlowLa
         let center = UNUserNotificationCenter.current()
         if section == 0 {
             task = taskList![indexPathRow]
-            let notifToDelete = task?.name
+            let notifToDelete = task?.uuid
             center.removePendingNotificationRequests(withIdentifiers: [notifToDelete!])
             
         }
@@ -299,6 +338,11 @@ class HomeController: UICollectionViewController, UICollectionViewDelegateFlowLa
         try! realm.write {
             realm.delete(task!)
         }
+        
+        if (taskList.count == 0) && (todoList.count == 0 ){
+            isEmpty = true
+        }
+        
     }
     
     
@@ -310,6 +354,7 @@ class HomeController: UICollectionViewController, UICollectionViewDelegateFlowLa
     func getData(){
         taskList = realm.objects(Task.self).filter("noDate == false").sorted(byKeyPath: "notificationTime")
         todoList = realm.objects(Task.self).filter("noDate == true")
+        
     }
     
     @objc func handleKeyboardNotification(notification: NSNotification) {
@@ -331,7 +376,7 @@ class HomeController: UICollectionViewController, UICollectionViewDelegateFlowLa
     }
     
     func setupNav() {
-        let rightIcon: UIImage? = UIImage(named:"repeat")?.withRenderingMode(.alwaysOriginal)
+        let rightIcon: UIImage? = UIImage(named:"repeatuncolored")?.withRenderingMode(.alwaysOriginal)
         let rightIconButton = UIBarButtonItem(image: rightIcon, style: .plain, target: self, action: #selector(rightIconPushed))
         navigationItem.rightBarButtonItem = rightIconButton
     }
@@ -362,5 +407,28 @@ extension UILabel {
             let attrs: [NSAttributedStringKey : Any] = [.kern: value]
             attributedText = NSAttributedString(string: textString, attributes: attrs)
         }
+    }
+}
+
+extension UICollectionView {
+    
+    func setEmptyMessage() {
+        self.backgroundView = EmptyState();
+        
+    }
+    
+    func restore() {
+        self.backgroundView = nil
+    }
+}
+
+extension UIImage {
+    func tinted(with color: UIColor) -> UIImage? {
+        UIGraphicsBeginImageContextWithOptions(size, false, scale)
+        defer { UIGraphicsEndImageContext() }
+        color.set()
+        withRenderingMode(.alwaysTemplate)
+            .draw(in: CGRect(origin: .zero, size: size))
+        return UIGraphicsGetImageFromCurrentImageContext()
     }
 }

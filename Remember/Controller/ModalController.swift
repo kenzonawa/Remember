@@ -95,17 +95,17 @@ class ModalController: UIViewController {
         
     }
     
-    func scheduleNotification(taskName: String, inSeconds: TimeInterval, completion: @escaping (_ Success: Bool) -> ()) {
+    func scheduleNotification(task: Task, inSeconds: TimeInterval, completion: @escaping (_ Success: Bool) -> ()) {
         
         let notif = UNMutableNotificationContent()
         
         notif.title = "Reminder"
-        notif.body = taskName
+        notif.body = task.name
         notif.sound = UNNotificationSound.default()
         
         let notifTrigger = UNTimeIntervalNotificationTrigger(timeInterval: inSeconds, repeats: false)
         
-        let request = UNNotificationRequest(identifier: taskName, content: notif, trigger: notifTrigger)
+        let request = UNNotificationRequest(identifier: task.uuid, content: notif, trigger: notifTrigger)
         
         UNUserNotificationCenter.current().add(request, withCompletionHandler: { error in
             if error != nil {
@@ -150,6 +150,7 @@ class ModalController: UIViewController {
             
         }
         
+        DataManager.shared.mainController.isEmpty = false
         DataManager.shared.mainController.getData()
         DataManager.shared.mainController.collectionView?.reloadData()
         DataManager.shared.mainController.clearTextField()
@@ -162,6 +163,8 @@ class ModalController: UIViewController {
         
         var task: Task
         
+        let uuid = UUID().uuidString
+        
         // If no task was tapped -> New Task
         if isNewTask {
             
@@ -169,6 +172,7 @@ class ModalController: UIViewController {
                 let newTask = Task()
                 newTask.name = taskText!
                 newTask.notificationTime = time
+                newTask.uuid = uuid
                 return newTask
             }()
             try! realm.write {
@@ -190,7 +194,7 @@ class ModalController: UIViewController {
         
         let timeInterval = time.timeIntervalSinceNow
         
-        scheduleNotification(taskName: task.name, inSeconds: timeInterval, completion: {success in
+        scheduleNotification(task: task, inSeconds: timeInterval, completion: {success in
             if success{
                 print("Successfully scheduled notification")
             } else {
@@ -198,6 +202,7 @@ class ModalController: UIViewController {
             }
         })
         
+        DataManager.shared.mainController.isEmpty = false
         DataManager.shared.mainController.getData()
         DataManager.shared.mainController.collectionView?.reloadData()
         DataManager.shared.mainController.clearTextField()

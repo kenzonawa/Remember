@@ -43,7 +43,21 @@ class RepeatController: UICollectionViewController, UICollectionViewDelegateFlow
         
         collectionView?.alwaysBounceVertical = true
         collectionView?.showsVerticalScrollIndicator = false
-        navigationItem.title = "Repeat"
+//        navigationItem.titleView = UIImageView(image: UIImage(named: "repeat"))
+        navigationItem.title = "Repeat Reminders"
+        let attributes = [
+            NSAttributedStringKey.kern: 0.6,
+            NSAttributedStringKey.font: UIFont.systemFont(ofSize: 17, weight: .medium)
+            ] as [NSAttributedStringKey : Any]
+        self.navigationController?.navigationBar.titleTextAttributes = attributes
+        
+        
+//        let backImage = UIImage(named: "logouncolored")
+//        let backButton = UIButton(type: .custom)
+//        backButton.setImage(backImage, for: .normal) // Image can be downloaded from here below link
+//        backButton.addTarget(self, action: #selector(backAction), for: .touchUpInside)
+//        self.navigationItem.leftBarButtonItem = UIBarButtonItem(customView: backButton)
+        
         collectionView?.backgroundColor = UIColor.white
         
         collectionView?.register(RepeatCell.self, forCellWithReuseIdentifier: "repeatId")
@@ -72,7 +86,7 @@ class RepeatController: UICollectionViewController, UICollectionViewDelegateFlow
             
             let header = collectionView.dequeueReusableSupplementaryView(ofKind: kind, withReuseIdentifier: "headerId", for: indexPath) as! Header
             
-            header.label.text = "Repeat"
+            header.label.text = "Repeating Reminders"
 
             return header
             
@@ -99,6 +113,7 @@ class RepeatController: UICollectionViewController, UICollectionViewDelegateFlow
         let task = repeatList![indexPath.item]
         let cell =  collectionView.dequeueReusableCell(withReuseIdentifier: "repeatId", for: indexPath) as! RepeatCell
         cell.updateUI(taskName: task.name, time: task.notificationTime)
+        cell.updateFrequency(frequency: task.frequency, day: task.day)
         return cell
         
     }
@@ -136,7 +151,7 @@ class RepeatController: UICollectionViewController, UICollectionViewDelegateFlow
         var task: RepeatTask?
         let center = UNUserNotificationCenter.current()
         task = repeatList![indexPathRow]
-        let notifToDelete = task?.name
+        let notifToDelete = task?.uuid
         center.removePendingNotificationRequests(withIdentifiers: [notifToDelete!])
         
         print("Gotta delete ", task!)
@@ -190,5 +205,10 @@ class RepeatController: UICollectionViewController, UICollectionViewDelegateFlow
     func getData(){
         repeatList = realm.objects(RepeatTask.self)
     }
+    
+    @objc func backAction() -> Void {
+        self.navigationController?.popViewController(animated: true)
+    }
+
     
 }

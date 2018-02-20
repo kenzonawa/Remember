@@ -285,12 +285,12 @@ class RepeatModalController: UIViewController,UIPickerViewDelegate, UIPickerView
         
     }
     
-    func scheduleDaily() {
+    func scheduleDaily(task: RepeatTask) {
         
         let notif = UNMutableNotificationContent()
         
         notif.title = "Reminder"
-        notif.body = taskText!
+        notif.body = task.name
         notif.sound = UNNotificationSound.default()
         
         let components = datePicker.calendar.dateComponents([.hour, .minute], from: datePicker.date)
@@ -300,7 +300,7 @@ class RepeatModalController: UIViewController,UIPickerViewDelegate, UIPickerView
         date.minute = components.minute
         let notifTrigger = UNCalendarNotificationTrigger(dateMatching: date, repeats: true)
 
-        let request = UNNotificationRequest(identifier: taskText!, content: notif, trigger: notifTrigger)
+        let request = UNNotificationRequest(identifier: task.uuid , content: notif, trigger: notifTrigger)
 
         UNUserNotificationCenter.current().add(request, withCompletionHandler: { error in
             if error != nil {
@@ -311,12 +311,12 @@ class RepeatModalController: UIViewController,UIPickerViewDelegate, UIPickerView
         })
     }
     
-    func scheduleWeekly() {
+    func scheduleWeekly(task: RepeatTask) {
         
         let notif = UNMutableNotificationContent()
         
         notif.title = "Reminder"
-        notif.body = taskText!
+        notif.body = task.name
         notif.sound = UNNotificationSound.default()
         
         let calendar = Calendar.current
@@ -343,17 +343,54 @@ class RepeatModalController: UIViewController,UIPickerViewDelegate, UIPickerView
 
         print(triggerWeekly)
         
-        let notifTrigger = UNCalendarNotificationTrigger(dateMatching: triggerWeekly, repeats: false)
+        let notifTrigger = UNCalendarNotificationTrigger(dateMatching: triggerWeekly, repeats: true)
         
-//        let request = UNNotificationRequest(identifier: taskText!, content: notif, trigger: notifTrigger)
-//
-//        UNUserNotificationCenter.current().add(request, withCompletionHandler: { error in
-//            if error != nil {
-//                print("error?")
-//            } else {
-//                print("scheduled?")
-//            }
-//        })
+        let request = UNNotificationRequest(identifier: task.uuid, content: notif, trigger: notifTrigger)
+
+        UNUserNotificationCenter.current().add(request, withCompletionHandler: { error in
+            if error != nil {
+                print("error?")
+            } else {
+                print("scheduled?")
+            }
+        })
+    }
+    
+    func scheduleMonthly(task: RepeatTask) {
+        
+        let notif = UNMutableNotificationContent()
+        
+        notif.title = "Reminder"
+        notif.body = task.name
+        notif.sound = UNNotificationSound.default()
+        
+        let calendar = Calendar.current
+        let selectedDay = monthdayPicker.selectedRow(inComponent: 0) + 1
+        
+        let timeComponents = datePicker.calendar.dateComponents([.hour, .minute], from: datePicker.date)
+        
+        var components = DateComponents()
+        components.hour = timeComponents.hour
+        components.minute = timeComponents.minute
+        components.day = selectedDay
+        components.timeZone = .current
+        
+        let finalDate = calendar.date(from: components)!
+        
+        let triggerMonthly = Calendar.current.dateComponents([.day,.hour,.minute,.second,], from: finalDate)
+        
+        print(triggerMonthly)
+        
+        let notifTrigger = UNCalendarNotificationTrigger(dateMatching: triggerMonthly, repeats: true)
+        let request = UNNotificationRequest(identifier: task.uuid , content: notif, trigger: notifTrigger)
+
+        UNUserNotificationCenter.current().add(request, withCompletionHandler: { error in
+            if error != nil {
+                print("error?")
+            } else {
+                print("scheduled?")
+            }
+        })
     }
     
     @objc func dismissModal() {
@@ -365,13 +402,18 @@ class RepeatModalController: UIViewController,UIPickerViewDelegate, UIPickerView
         let time = datePicker.date
         var task: RepeatTask
         var newFrequency = ""
+        var day = ""
+        let uuid = UUID().uuidString
+        
         switch segmentIndex {
         case 0:
             newFrequency = "daily"
         case 1:
             newFrequency = "weekly"
+            day = values[weekdayPicker.selectedRow(inComponent: 0)]
         case 2:
             newFrequency = "monthly"
+            day = String(monthdayPicker.selectedRow(inComponent: 0)+1)
         default:
             print("daily")
         }
@@ -384,6 +426,8 @@ class RepeatModalController: UIViewController,UIPickerViewDelegate, UIPickerView
                 newTask.name = taskText!
                 newTask.notificationTime = time
                 newTask.frequency = newFrequency
+                newTask.day = day
+                newTask.uuid = uuid
                 return newTask
             }()
             try! realm.write {
@@ -391,11 +435,12 @@ class RepeatModalController: UIViewController,UIPickerViewDelegate, UIPickerView
             }
             
         } else {
-            print("WTF")
             task = currentTask!
+            taskText = task.name
             try! realm.write {
                 task.notificationTime = time
                 task.frequency = newFrequency
+                task.day = day
             }
             
         }
@@ -404,15 +449,15 @@ class RepeatModalController: UIViewController,UIPickerViewDelegate, UIPickerView
         switch segmentIndex {
         case 0:
             print("Daily")
-            scheduleDaily()
-            
+            scheduleDaily(task: task)
             
         case 1:
             print("Weekly")
-            scheduleWeekly()
+            scheduleWeekly(task: task)
             
         case 2:
             print("Monthly")
+            scheduleMonthly(task: task)
             
         default:
             print("Purple")
