@@ -47,10 +47,37 @@ class ModalController: UIViewController {
     
     let addButton: PrimaryButton = {
         let button = PrimaryButton()
-        button.setTitle("Add Reminder", for: .normal)
+        button.setTitle("Add Task", for: .normal)
         button.addTarget(self, action: #selector(addTask), for: .touchUpInside)
         return button
     }()
+    
+    let row: UIView = {
+        let row = UIView()
+        let top = UIView()
+        let bottom = UIView()
+        let color = UIColor(red: 205/255, green: 205/255, blue: 205/255, alpha: 1)
+        row.addSubview(top)
+        row.addSubview(bottom)
+        row.addConstraintsWithFormat(format: "H:|[v0]|", views: top)
+        row.addConstraintsWithFormat(format: "H:|[v0]|", views: bottom)
+        row.addConstraintsWithFormat(format: "V:|[v0(1)]", views: top)
+        row.addConstraintsWithFormat(format: "V:[v0(1)]|", views: bottom)
+        
+        top.backgroundColor = color
+        bottom.backgroundColor = color
+        
+        return row
+    }()
+    
+    let noDateLabel: UILabel = {
+        let label = UILabel()
+        label.text = "Set Reminder"
+        label.font = UIFont.systemFont(ofSize: 17, weight: .medium)
+        return label
+    }()
+    
+    let toggle = UISwitch()
     
     let noDateButton: SecondaryButton = {
         let button = SecondaryButton()
@@ -65,17 +92,23 @@ class ModalController: UIViewController {
         
         datePicker.minimumDate = Date(timeIntervalSinceNow: 120)
         
+        setupRow()
 
         formView.addSubview(datePicker)
-        formView.addSubview(noDateButton)
+        formView.addSubview(row)
         formView.addSubview(addButton)
         
+//        formView.addSubview(noDateButton)
+//        formView.addConstraintsWithFormat(format: "H:|-24-[v0(132)]", views: noDateButton)
+//        formView.addConstraintsWithFormat(format: "V:[v0(48)]-24-|", views: noDateButton)
+        
         formView.addConstraintsWithFormat(format: "H:|[v0]|", views: datePicker)
-        formView.addConstraintsWithFormat(format: "H:|-24-[v0(132)]", views: noDateButton)
-        formView.addConstraintsWithFormat(format: "H:[v0(144)]-24-|", views: addButton)
-        formView.addConstraintsWithFormat(format: "V:|-20-[v0]", views: datePicker)
-        formView.addConstraintsWithFormat(format: "V:[v0(48)]-24-|", views: noDateButton)
-        formView.addConstraintsWithFormat(format: "V:[v0(48)]-24-|", views: addButton)
+        formView.addConstraintsWithFormat(format: "H:|[v0]|", views: row)
+        
+        formView.addConstraintsWithFormat(format: "H:|-24-[v0]-24-|", views: addButton)
+        formView.addConstraintsWithFormat(format: "V:|-[v0]-[v1(64)]", views: datePicker,row)
+        
+        formView.addConstraintsWithFormat(format: "V:[v0(52)]-24-|", views: addButton)
         
         view.backgroundColor = UIColor(red: 0/255, green: 0/255, blue: 0/255, alpha: 0.5)
         
@@ -87,11 +120,47 @@ class ModalController: UIViewController {
         backgroundView.addGestureRecognizer(gesture)
         
         view.addSubview(formView)
+        
+        let bounds = UIScreen.main.bounds
+        let width = bounds.size.width
+        
+        print(width)
+        
+        if width < 360 {
+            view.addConstraintsWithFormat(format: "H:|-16-[v0]-16-|", views: formView)
+        } else {
         view.addConstraintsWithFormat(format: "H:|-32-[v0]-32-|", views: formView)
-        view.addConstraintsWithFormat(format: "V:[v0(332)]", views: formView)
+        }
+        view.addConstraintsWithFormat(format: "V:[v0(400)]", views: formView)
         let YConstraint = formView.centerYAnchor.constraint(equalTo: self.view.centerYAnchor)
         
         NSLayoutConstraint.activate([YConstraint])
+        
+    }
+    
+    func setupRow() {
+        
+        toggle.setOn(true, animated: false)
+        toggle.addTarget(self, action: #selector(switchToggled), for: .valueChanged)
+        
+        row.addSubview(noDateLabel)
+        row.addSubview(toggle)
+        
+        row.addConstraintsWithFormat(format: "H:|-24-[v0]", views: noDateLabel)
+        row.addConstraintsWithFormat(format: "H:[v0]-24-|", views: toggle)
+        noDateLabel.centerYAnchor.constraint(equalTo: row.centerYAnchor).isActive = true
+        toggle.centerYAnchor.constraint(equalTo: row.centerYAnchor).isActive = true
+        
+    }
+    
+    @objc func switchToggled () {
+        
+        if toggle.isOn {
+            datePicker.isEnabled = true
+        } else {
+            datePicker.isEnabled = false
+        }
+        
         
     }
     
@@ -127,6 +196,8 @@ class ModalController: UIViewController {
         
         // If no task was tapped -> New Task
         if isNewTask {
+            
+            
             
             task = {
                 let newTask = Task()
@@ -168,26 +239,59 @@ class ModalController: UIViewController {
         // If no task was tapped -> New Task
         if isNewTask {
             
-            task = {
-                let newTask = Task()
-                newTask.name = taskText!
-                newTask.notificationTime = time
-                newTask.uuid = uuid
-                return newTask
-            }()
+            if toggle.isOn { // New Task & Reminder Date
+                
+                task = {
+                    let newTask = Task()
+                    newTask.name = taskText!
+                    newTask.notificationTime = time
+                    newTask.uuid = uuid
+                    return newTask
+                }()
+                
+            }
+                
+            else {  // New Task & No Date
+            
+                task = {
+                    let newTask = Task()
+                    newTask.name = taskText!
+                    newTask.noDate = true
+                    return newTask
+                }()
+                
+            }
+            
             try! realm.write {
                 realm.add(task)
             }
             
-        } else {
-            print("WTF")
-            task = currentTask!
-            try! realm.write {
-                task.notificationTime = time
-                task.shouldAct = false
-                task.noDate = false
+        }
+        
+        // Selected a Task
+        else {
+            
+            if toggle.isOn { // Old Task & Reminder Date
+                
+                task = currentTask!
+                try! realm.write {
+                    task.notificationTime = time
+                    task.shouldAct = false
+                    task.noDate = false
+                }
+                
             }
             
+            else { // Old Task & No Date
+                
+                task = currentTask!
+                try! realm.write {
+                    task.notificationTime = Date()
+                    task.shouldAct = false
+                    task.noDate = true
+                }
+                
+            }
         }
         
         

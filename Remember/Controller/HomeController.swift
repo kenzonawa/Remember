@@ -130,7 +130,14 @@ class HomeController: UICollectionViewController, UICollectionViewDelegateFlowLa
     
     override func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
         
-        if isEmpty { self.collectionView?.setEmptyMessage() }
+        if isEmpty {
+            
+            let image = UIImage(named: "emptystate")
+            let message = "To start adding reminders, write a task below"
+            let title = "No reminders"
+            self.collectionView?.setEmptyMessage(image: image!, message: message, title: title)
+            
+        }
         else { self.collectionView?.restore() }
         
         if section == 0 {
@@ -293,7 +300,9 @@ class HomeController: UICollectionViewController, UICollectionViewDelegateFlowLa
         print("works..")
         deleteTask(indexPathRow: indexPath.row, section: indexPath.section)
         print("works 2 ..")
-        collectionView.deleteItems(at: [indexPath])
+        if !isEmpty {
+            collectionView.deleteItems(at: [indexPath])
+        }
         print("works 3 ..")
         
         collectionView.reloadData()
@@ -412,8 +421,8 @@ extension UILabel {
 
 extension UICollectionView {
     
-    func setEmptyMessage() {
-        self.backgroundView = EmptyState();
+    func setEmptyMessage(image: UIImage, message: String, title: String) {
+        self.backgroundView = EmptyState(image: image, text: message, title: title);
         
     }
     

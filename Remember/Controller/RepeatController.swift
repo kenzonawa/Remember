@@ -16,13 +16,21 @@ class RepeatController: UICollectionViewController, UICollectionViewDelegateFlow
     
     let realm = try! Realm()
     
-    var repeatList: Results<RepeatTask>?
+    var repeatList: Results<RepeatTask>!
     
     var currentIndexPath: Int?
+    
+    var isEmpty: Bool = true
     
     override func viewDidLoad() {
         super.viewDidLoad()
         getData()
+        
+        if (repeatList.count > 0) {
+            isEmpty = false
+        } else {
+            isEmpty = true
+        }
         
         let taskInput: UIView = RepeatInput(superView: self)
         
@@ -44,7 +52,7 @@ class RepeatController: UICollectionViewController, UICollectionViewDelegateFlow
         collectionView?.alwaysBounceVertical = true
         collectionView?.showsVerticalScrollIndicator = false
 //        navigationItem.titleView = UIImageView(image: UIImage(named: "repeat"))
-        navigationItem.title = "Repeat Reminders"
+        navigationItem.title = "Repeaters"
         let attributes = [
             NSAttributedStringKey.kern: 0.6,
             NSAttributedStringKey.font: UIFont.systemFont(ofSize: 17, weight: .medium)
@@ -101,10 +109,26 @@ class RepeatController: UICollectionViewController, UICollectionViewDelegateFlow
     }
     
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, referenceSizeForHeaderInSection section: Int) -> CGSize {
+        
+        if isEmpty {
+            return CGSize(width: 0, height: 0)
+        }
+        
         return CGSize(width: view.frame.width, height: 60)
     }
     
     override func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
+        
+        if isEmpty {
+            
+            let image = UIImage(named: "repeatempty")
+            let message = "To add repeating reminders, write a task below"
+            let title = "No repeating reminders"
+            self.collectionView?.setEmptyMessage(image: image!, message: message, title: title)
+            
+        }
+        else { self.collectionView?.restore() }
+        
         return (repeatList?.count)!
     }
     
@@ -143,6 +167,11 @@ class RepeatController: UICollectionViewController, UICollectionViewDelegateFlow
     override func collectionView(_ collectionView: UICollectionView, performAction action: Selector, forItemAt indexPath: IndexPath, withSender sender: Any?) {
         
         deleteTask(indexPathRow: indexPath.row, section: indexPath.section)
+        
+        if !isEmpty {
+            collectionView.deleteItems(at: [indexPath])
+        }
+        
         collectionView.reloadData()
         
     }
@@ -158,6 +187,11 @@ class RepeatController: UICollectionViewController, UICollectionViewDelegateFlow
         try! realm.write {
             realm.delete(task!)
         }
+        
+        if (repeatList.count == 0 ){
+            isEmpty = true
+        }
+        
     }
     
     @objc func dismissKeyboard() {
@@ -210,5 +244,4 @@ class RepeatController: UICollectionViewController, UICollectionViewDelegateFlow
         self.navigationController?.popViewController(animated: true)
     }
 
-    
 }

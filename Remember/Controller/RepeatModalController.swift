@@ -463,6 +463,7 @@ class RepeatModalController: UIViewController,UIPickerViewDelegate, UIPickerView
             print("Purple")
         }
         
+        DataManager.shared.repeatController.isEmpty = false
         DataManager.shared.repeatController.getData()
         DataManager.shared.repeatController.collectionView?.reloadData()
         DataManager.shared.repeatController.clearTextField()

@@ -125,41 +125,25 @@ class EmptyState: UIView {
     
     let topView = UIView()
     
-    let image: UIImageView = {
-        let image = UIImage(named: "emptystate")
+    let imageView: UIImageView = {
         let imageView = UIImageView()
-        imageView.image = image
         imageView.contentMode = .scaleAspectFit
         return imageView
     }()
     
     let title: UILabel = {
         let label = UILabel()
-        label.text = "No reminders"
         label.font = UIFont.systemFont(ofSize: 22, weight: .medium)
         label.textColor = UIColor(red: 155/255, green: 155/255, blue: 155/255, alpha: 1)
         label.addCharactersSpacing(0.6)
-        label.textAlignment = .center
         return label
     }()
     
     let label: UILabel = {
         let label = UILabel()
-        
-        let attributedString = NSMutableAttributedString(string: "To start adding reminders, write a task below")
-        
-        let paragraphStyle = NSMutableParagraphStyle()
-        
-        paragraphStyle.lineSpacing = 6 // Whatever line spacing you want in points
-        
-        attributedString.addAttribute(NSAttributedStringKey.paragraphStyle, value:paragraphStyle, range:NSMakeRange(0, attributedString.length))
-        
-        label.attributedText = attributedString;
-        
         label.textColor = UIColor(red: 155/255, green: 155/255, blue: 155/255, alpha: 1)
         label.font = UIFont.systemFont(ofSize: 17, weight: .regular)
         label.addCharactersSpacing(0.6)
-        label.textAlignment = .center
         label.numberOfLines = 0
         label.lineBreakMode = NSLineBreakMode.byWordWrapping
         return label
@@ -175,6 +159,29 @@ class EmptyState: UIView {
         setupViews()
     }
     
+    init(image: UIImage, text: String, title: String) {
+        super.init(frame: CGRect.zero)
+        setupViews()
+        setupImageView(image: image)
+        setupLabels(body: text, titleText: title)
+    }
+    
+    func setupLabels(body: String, titleText: String) {
+        let attributedString = NSMutableAttributedString(string: body)
+        let paragraphStyle = NSMutableParagraphStyle()
+        paragraphStyle.lineSpacing = 6 // Whatever line spacing you want in points
+        attributedString.addAttribute(NSAttributedStringKey.paragraphStyle, value:paragraphStyle, range:NSMakeRange(0, attributedString.length))
+        label.attributedText = attributedString
+        label.textAlignment = .center
+        
+        title.text = titleText
+        title.textAlignment = .center
+    }
+    
+    func setupImageView(image: UIImage) {
+        imageView.image = image
+    }
+    
     func setupViews() {
         
         let containerView = UIView()
@@ -188,29 +195,20 @@ class EmptyState: UIView {
         addConstraintsWithFormat(format: "V:[v0]-100-|", views: containerView)
         
         containerView.addSubview(topView)
-        containerView.addSubview(image)
+        containerView.addSubview(imageView)
         containerView.addSubview(title)
         containerView.addSubview(label)
         
+        let bounds = UIScreen.main.bounds
+        let height = bounds.size.height
         
-        containerView.addConstraintsWithFormat(format: "V:[v3]-[v0(80)]-16-[v1]-12-[v2]", views: image,title,label,topView)
-        topView.heightAnchor.constraint(greaterThanOrEqualToConstant: 220).isActive = true
-        image.centerXAnchor.constraint(equalTo: containerView.centerXAnchor).isActive = true
+        containerView.addConstraintsWithFormat(format: "V:[v3]-[v0(80)]-16-[v1]-12-[v2]", views: imageView,title,label,topView)
+        topView.heightAnchor.constraint(greaterThanOrEqualToConstant: height*0.3).isActive = true
+        imageView.centerXAnchor.constraint(equalTo: containerView.centerXAnchor).isActive = true
         title.centerXAnchor.constraint(equalTo: containerView.centerXAnchor).isActive = true
         label.centerXAnchor.constraint(equalTo: containerView.centerXAnchor).isActive = true
         label.widthAnchor.constraint(equalToConstant: 300).isActive = true
         
     }
     
-//    override func updateConstraints() {
-//        if !didSetupConstraints {
-//
-//
-//
-//            didSetupConstraints = true
-//        }
-//
-//        super.updateConstraints()
-//    }
-//
 }
