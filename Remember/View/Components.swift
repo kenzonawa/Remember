@@ -27,6 +27,16 @@ public class Header: UICollectionViewCell {
         return textField
     }()
     
+    func inactive() {
+        if label.text == "No Date"{
+            label.textColor = UIColor(red: 214/255, green: 214/255, blue: 214/255, alpha: 1)
+        }
+    }
+    
+    func active() {
+        label.textColor = UIColor(red: 51/255, green: 51/255, blue: 51/255, alpha: 1)
+    }
+    
     func setupViews() {
         
         addSubview(label)

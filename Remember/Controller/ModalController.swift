@@ -90,7 +90,7 @@ class ModalController: UIViewController {
         super.viewDidLoad()
         checkNewTask()
         
-        datePicker.minimumDate = Date(timeIntervalSinceNow: 120)
+        datePicker.minimumDate = Date(timeIntervalSinceNow: 60)
         
         setupRow()
 
@@ -136,6 +136,37 @@ class ModalController: UIViewController {
         
         NSLayoutConstraint.activate([YConstraint])
         
+        
+        UNUserNotificationCenter.current().getNotificationSettings { (thing) in
+            if thing.authorizationStatus.rawValue == 1 {
+                
+                let alertController = UIAlertController (title: "Notifications Disabled", message: "To receive reminders, enable notifications on the Settings page", preferredStyle: .alert)
+                
+                let cancelAction = UIAlertAction(title: "Cancel", style: .default, handler: nil)
+                alertController.addAction(cancelAction)
+                
+                let settingsAction = UIAlertAction(title: "Settings", style: .default) { (_) -> Void in
+                    guard let settingsUrl = URL(string: UIApplicationOpenSettingsURLString) else {
+                        return
+                    }
+                    
+                    if UIApplication.shared.canOpenURL(settingsUrl) {
+                        UIApplication.shared.open(settingsUrl, completionHandler: { (success) in
+                            print("Settings opened: \(success)") // Prints true
+                        })
+                    }
+                }
+                alertController.addAction(settingsAction)
+                
+                
+                self.present(alertController, animated: true, completion: nil)
+                
+            } else{
+                
+            }
+            
+        }
+        
     }
     
     func setupRow() {
@@ -164,27 +195,7 @@ class ModalController: UIViewController {
         
     }
     
-    func scheduleNotification(task: Task, inSeconds: TimeInterval, completion: @escaping (_ Success: Bool) -> ()) {
-        
-        let notif = UNMutableNotificationContent()
-        
-        notif.title = "Reminder"
-        notif.body = task.name
-        notif.sound = UNNotificationSound.default()
-        
-        let notifTrigger = UNTimeIntervalNotificationTrigger(timeInterval: inSeconds, repeats: false)
-        
-        let request = UNNotificationRequest(identifier: task.uuid, content: notif, trigger: notifTrigger)
-        
-        UNUserNotificationCenter.current().add(request, withCompletionHandler: { error in
-            if error != nil {
-                completion(false)
-            } else {
-                completion(true)
-            }
-        })
-        
-    }
+    
     
     @objc func dismissModal() {
         self.dismiss(animated: true, completion: nil)
@@ -196,8 +207,6 @@ class ModalController: UIViewController {
         
         // If no task was tapped -> New Task
         if isNewTask {
-            
-            
             
             task = {
                 let newTask = Task()
@@ -230,7 +239,17 @@ class ModalController: UIViewController {
     
     @objc func addTask(){
         
-        let time = datePicker.date
+        let timeComponents = Calendar.current.dateComponents([.year, .month, .day , .hour, .minute], from: datePicker.date)
+        
+        var components = DateComponents()
+        components.year = timeComponents.year
+        components.month = timeComponents.month
+        components.day = timeComponents.day
+        components.hour = timeComponents.hour
+        components.minute = timeComponents.minute
+        components.timeZone = .current
+        
+        let time = Calendar.current.date(from: components)!
         
         var task: Task
         
@@ -274,15 +293,20 @@ class ModalController: UIViewController {
             if toggle.isOn { // Old Task & Reminder Date
                 
                 task = currentTask!
+                
                 try! realm.write {
                     task.notificationTime = time
                     task.shouldAct = false
                     task.noDate = false
+                    if task.uuid == "" {
+                        task.uuid = uuid
+                    }
                 }
+                print(task)
                 
             }
             
-            else { // Old Task & No Date
+            else { // Old Task & No Date - No sense option
                 
                 task = currentTask!
                 try! realm.write {
@@ -296,9 +320,9 @@ class ModalController: UIViewController {
         
         
         
-        let timeInterval = time.timeIntervalSinceNow
+//        let timeInterval = time.timeIntervalSinceNow
         
-        scheduleNotification(task: task, inSeconds: timeInterval, completion: {success in
+        scheduleNotification(task: task, completion: {success in
             if success{
                 print("Successfully scheduled notification")
             } else {
@@ -311,6 +335,46 @@ class ModalController: UIViewController {
         DataManager.shared.mainController.collectionView?.reloadData()
         DataManager.shared.mainController.clearTextField()
         dismissModal()
+    }
+    
+    func scheduleNotification(task: Task, completion: @escaping (_ Success: Bool) -> ()) {
+        
+        let notif = UNMutableNotificationContent()
+        
+        notif.title = "Reminder"
+        notif.body = task.name
+        notif.sound = UNNotificationSound.default()
+        
+        let components = datePicker.calendar.dateComponents([.day, .hour, .minute], from: datePicker.date)
+        
+        var date = DateComponents()
+        date.day = components.day
+        date.hour = components.hour
+        date.minute = components.minute
+        let notifTrigger = UNCalendarNotificationTrigger(dateMatching: date, repeats: false)
+        
+        let request = UNNotificationRequest(identifier: task.uuid , content: notif, trigger: notifTrigger)
+        
+        UNUserNotificationCenter.current().add(request, withCompletionHandler: { error in
+            if error != nil {
+                print("error?")
+            } else {
+                print("New Notification Scheduling Success")
+            }
+        })
+        
+//        let notifTrigger = UNTimeIntervalNotificationTrigger(timeInterval: inSeconds, repeats: false)
+    
+//        let request = UNNotificationRequest(identifier: task.uuid, content: notif, trigger: notifTrigger)
+//
+//        UNUserNotificationCenter.current().add(request, withCompletionHandler: { error in
+//            if error != nil {
+//                completion(false)
+//            } else {
+//                completion(true)
+//            }
+//        })
+        
     }
     
     func checkNewTask() {

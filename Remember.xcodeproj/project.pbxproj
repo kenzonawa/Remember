@@ -27,6 +27,7 @@
 		78EC8D882033E2EE000C6A77 /* Components.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78EC8D872033E2EE000C6A77 /* Components.swift */; };
 		78EE815F2032085D009A2BA9 /* ModalController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78EE815E2032085D009A2BA9 /* ModalController.swift */; };
 		78EE816120321B0E009A2BA9 /* ToggleButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78EE816020321B0E009A2BA9 /* ToggleButton.swift */; };
+		78F89E462065990300384A34 /* UYLNotificationDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78F89E452065990300384A34 /* UYLNotificationDelegate.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -63,6 +64,7 @@
 		78EC8D872033E2EE000C6A77 /* Components.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Components.swift; sourceTree = "<group>"; };
 		78EE815E2032085D009A2BA9 /* ModalController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModalController.swift; sourceTree = "<group>"; };
 		78EE816020321B0E009A2BA9 /* ToggleButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToggleButton.swift; sourceTree = "<group>"; };
+		78F89E452065990300384A34 /* UYLNotificationDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UYLNotificationDelegate.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -99,6 +101,7 @@
 		780E6B65202A10C300D5CC66 /* Remember */ = {
 			isa = PBXGroup;
 			children = (
+				78F89E452065990300384A34 /* UYLNotificationDelegate.swift */,
 				78EC8D8A2033E3C3000C6A77 /* Controller */,
 				78EC8D892033E3BA000C6A77 /* View */,
 				780E6B66202A10C300D5CC66 /* AppDelegate.swift */,
@@ -230,6 +233,7 @@
 				78EE815F2032085D009A2BA9 /* ModalController.swift in Sources */,
 				78EC8D862033E13A000C6A77 /* Cells.swift in Sources */,
 				78EC8D842033D719000C6A77 /* DataManager.swift in Sources */,
+				78F89E462065990300384A34 /* UYLNotificationDelegate.swift in Sources */,
 				789BB2E720353FB9001D7406 /* Buttons.swift in Sources */,
 				780E6B6F202A10C300D5CC66 /* Todo_minders.xcdatamodeld in Sources */,
 				7800AC5E20339102005A1E4B /* Task.swift in Sources */,

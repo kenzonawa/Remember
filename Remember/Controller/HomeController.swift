@@ -21,7 +21,15 @@ class HomeController: UICollectionViewController, UICollectionViewDelegateFlowLa
     
     var isEmpty: Bool = true
     
-    var currentIndexPath: Int?
+    var currentIndexPath: IndexPath?
+    
+    var notifiedIndexes = [Int]()
+    
+    var guide: UILayoutGuide!
+    
+    var buttonList: [Int]!
+    
+    let notificationDelegate = UYLNotificationDelegate()
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -77,6 +85,8 @@ class HomeController: UICollectionViewController, UICollectionViewDelegateFlowLa
             }
         })
         
+        UNUserNotificationCenter.current().delegate = notificationDelegate
+        
         collectionView?.register(TaskCell.self, forCellWithReuseIdentifier: "cellId")
         collectionView?.register(NotifiedCell.self, forCellWithReuseIdentifier: "notiId")
         collectionView?.register(TodoCell.self, forCellWithReuseIdentifier: "todoId")
@@ -89,12 +99,24 @@ class HomeController: UICollectionViewController, UICollectionViewDelegateFlowLa
         // Pin the leading edge of myView to the margin's leading edge
         taskInput.translatesAutoresizingMaskIntoConstraints = false
         
+        guide = view.safeAreaLayoutGuide
+        
+        NSLayoutConstraint.activate([
+            self.view.bottomAnchor.constraintEqualToSystemSpacingBelow(guide.bottomAnchor, multiplier: 1.0)
+            ])
+        
         let leadingConstraint = taskInput.leadingAnchor.constraint(equalTo: view.leadingAnchor)
         let trailingConstraint = taskInput.trailingAnchor.constraint(equalTo: view.trailingAnchor)
-        viewBottomConstraint = taskInput.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: 0)
-        let heightConstraint = taskInput.heightAnchor.constraint(equalToConstant: 72)
+        viewBottomConstraint = taskInput.bottomAnchor.constraint(equalTo: guide.bottomAnchor, constant: 0)
+        let heightConstraint = taskInput.heightAnchor.constraint(equalToConstant: 80)
         NSLayoutConstraint.activate([leadingConstraint, trailingConstraint, viewBottomConstraint, heightConstraint])
 
+        let notifiedItems = (collectionView?.numberOfItems(inSection: 0))!
+        if notifiedItems > 0 {
+            for i in 0...(notifiedItems-1) {
+                notifiedIndexes.append(i)
+            }
+        }
         DataManager.shared.mainController = self
         
     }
@@ -141,6 +163,7 @@ class HomeController: UICollectionViewController, UICollectionViewDelegateFlowLa
         else { self.collectionView?.restore() }
         
         if section == 0 {
+            
             return taskList!.count
         }
         if section == 1 {
@@ -198,7 +221,6 @@ class HomeController: UICollectionViewController, UICollectionViewDelegateFlowLa
     
     override func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         
-        //currentIndexPath = indexPath.row
         var task: Task
         if indexPath.section == 0 {
             task = taskList![indexPath.row]
@@ -256,14 +278,18 @@ class HomeController: UICollectionViewController, UICollectionViewDelegateFlowLa
         case UICollectionElementKindSectionHeader:
             
             let header = collectionView.dequeueReusableSupplementaryView(ofKind: kind, withReuseIdentifier: "headerId", for: indexPath) as! Header
+            header.active()
             if(indexPath.section == 0) {
                 header.label.text = "Reminders"
                 header.label.addCharactersSpacing(1.2)
-            }
-            if(indexPath.section == 1) {
+            } else if(indexPath.section == 1) {
                 header.label.text = "No Date"
                 header.label.addCharactersSpacing(1.2)
+                if(self.collectionView?.numberOfItems(inSection: 1) == 0) {
+                    header.inactive()
+                } 
             }
+            
             return header
         
         case UICollectionElementKindSectionFooter:
@@ -306,18 +332,30 @@ class HomeController: UICollectionViewController, UICollectionViewDelegateFlowLa
         print("works 3 ..")
         
         collectionView.reloadData()
+        if (indexPath.section == 1) && (self.collectionView?.numberOfItems(inSection: 1) == 0){
+            let indexSet = IndexSet(integer: 1)
+            self.collectionView?.reloadSections(indexSet)
+        }
         
     }
     
     @objc func DoneTapped(_ sender: UIButton) {
+        
+        let index = IndexPath(row: sender.tag, section: 0)
+        print("To delete \(index)")
         deleteTask(indexPathRow: sender.tag, section: 0)
-        collectionView?.reloadData()
+        if !isEmpty {
+            collectionView?.deleteItems(at: [index])
+        }
+        
+        let indexSet = IndexSet(integer: 0)
+        self.collectionView?.reloadSections(indexSet)
+        
     }
     
     @objc func SnoozeTapped(_ sender: UIButton) {
         
-        print("why am i")
-        
+        print(notifiedIndexes)
         let task = taskList![sender.tag]
         
         let modalController = ModalController()
